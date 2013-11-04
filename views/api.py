@@ -50,18 +50,42 @@ apply to them:
 from django.utils.translation import ugettext as _
 from tastypie.authentication import SessionAuthentication
 from tastypie.authorization import DjangoAuthorization
+from tastypie.exceptions import Unauthorized
 from tastypie.resources import ModelResource, Resource
 
-from inboxen.models import Inbox
+from inboxen.helper.inbox import inbox_available, clean_tags, gen_inbox
+from inboxen.models import Domain, Inbox
 from queue.delete.tasks import delete_inbox
 
 class InboxesResource(ModelResource):
     """Handle Inbox related requests"""
     #TODO: make tags updatable as a child of this resource?
-    #TODO: allow creation of new Inbox
 
     def dehydrate(self, bundle):
+        # add an unread count to response
         bundle.data['unread'] = bundle.obj.email_set.filter(read=False).count()
+        return bundle
+
+    def get_object_list(self, request):
+        return self._meta.queryset.filter(user=request.user)
+
+    def obj_create(self, bundle, **kwargs):
+        # See #119
+        #TODO: allow choosing of domain
+
+        domain = Domain.objects.only('id')[0]
+        inbox = gen_inbox(5)
+
+        new_inbox = Inbox(inbox=inbox, domain=domain, user=request.user, created=datetime.now(utc))
+        new_inbox.save()
+
+        tags = kwargs.get('tags','')
+        for tag in tags:
+            tag = Tag(tag=tag)
+            tag.inbox = new_inbox
+            tag.save()
+
+        bundle.obj = new_inbox
         return bundle
 
     def obj_delete(self, bundle, **kwargs):
@@ -104,7 +128,7 @@ class EmailsResource(ModelResource):
     pass
 
 class InboxenAuth(DjangoAuthorization):
-    """Do Inboxen style user checking"""
+    """Write-authorisation for Inboxen"""
     #TODO: implement
 
     pass
