@@ -66,9 +66,6 @@ class InboxesResource(ModelResource):
         bundle.data['unread'] = bundle.obj.email_set.filter(read=False).count()
         return bundle
 
-    def get_object_list(self, request):
-        return self._meta.queryset.filter(user=request.user)
-
     def obj_create(self, bundle, **kwargs):
         # See #119
         #TODO: allow choosing of domain
@@ -104,7 +101,7 @@ class InboxesResource(ModelResource):
 
     def obj_delete_list(self, bundle, **kwargs):
         """Delete list of objects, partly taken from TastyPie source"""
-        objects_to_delete = self.obj_get_list(bundle=bundle, **kwargs)
+        objects_to_delete = self.obj_get_list(bundle=bundle, **kwargs).only('id','user')
         deletable_objects = self.authorized_delete_list(objects_to_delete, bundle)
 
         for authed_obj in deletable_objects:
@@ -128,7 +125,72 @@ class EmailsResource(ModelResource):
     pass
 
 class InboxenAuth(DjangoAuthorization):
-    """Write-authorisation for Inboxen"""
-    #TODO: implement
+    """Authorisation for Inboxen"""
+    def read_list(self, object_list, bundle):
+        if not self.base_checks(bundle.request, object_list.model):
+            raise Unauthorized(_("You're not logged in"))
 
-    pass
+        if hasattr(object_list.model, 'user'):
+            return object_list.filter(user=bundle.request.user)
+        elif hasattr(object_list.model, 'inbox'):
+            return object_list.filter(inbox__user=bundle.request.user)
+        else:
+            return []
+
+    def read_detail(self, object_list, bundle):
+        if not self.base_checks(bundle.request, object_list.__class__)
+            raise Unauthorized(_("You're not logged in"))
+
+        if hasattr(bundle.obj.__class__, 'user'):
+            return bundle.obj.user == bundle.request.user
+        elif hasattr(object_list.__class__, 'inbox'):
+            return bundle.obj.inbox.user == bundle.request.user
+        else:
+            return False
+
+    def create_list(self, object_list, bundle):
+        if not self.base_checks(bundle.request, object_list.model):
+            raise Unauthorized(_("You're not logged in"))
+
+        # deadlox
+        raise Unauthorized(_("Don't do dis"))
+
+    def create_detail(self, object_list, bundle):
+        if not self.base_checks(bundle.request, object_list.__class__)
+            raise Unauthorized(_("You're not logged in"))
+
+        # for Inboxes
+        if hasattr(bundle.obj.__class__, 'user'):
+            return bundle.obj.user == bundle.request.user
+        else:
+            return False
+
+    def update_list(self, object_list, bundle):
+        if not self.base_checks(bundle.request, object_list.model):
+            raise Unauthorized(_("You're not logged in"))
+
+        return []
+
+    def update_detail(self, object_list, bundle):
+        if not self.base_checks(bundle.request, object_list.__class__)
+            raise Unauthorized(_("You're not logged in"))
+
+        return False
+
+    def delete_list(self, object_list, bundle):
+        if not self.base_checks(bundle.request, object_list.model):
+            raise Unauthorized(_("You're not logged in"))
+
+        if hasattr(object_list.model, 'user'):
+            return object_list.filter(user=bundle.request.user)
+        else:
+            return []
+
+    def delete_detail(self, object_list, bundle):
+        if not self.base_checks(bundle.request, object_list.__class__)
+            raise Unauthorized(_("You're not logged in"))
+
+        if hasattr(bundle.obj.__class__, 'user'):
+            return bundle.obj.user == bundle.request.user
+        else:
+            return False
