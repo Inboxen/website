@@ -22,7 +22,6 @@ from django.conf.urls import patterns, include, url
 from django.conf.urls.defaults import *
 from tastypie.api import Api
 
-
 from website.views.blog.feed import RssFeed, AtomFeed
 from website.views.api import InboxesResource
 
@@ -37,7 +36,7 @@ api_v1.register(InboxesResource())
 # If you're debugging regex, test it out on http://www.debuggex.com/ first - M
 urlpatterns = patterns('',
     url(r'^$', 'website.views.index.index'),
-    (r'^api/', include(v1_api.urls)),
+    (r'^api/', include(api_v1.urls)),
     url(r'^blog/add/', 'website.views.blog.add.add'),
     url(r'^blog/post/(?P<postid>\d+)', 'website.views.blog.view.post'),
     url(r'^blog/delete/(?P<postid>\d+)', 'website.views.blog.delete.delete'),
