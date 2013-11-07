@@ -20,20 +20,24 @@
 from django.conf import settings
 from django.conf.urls import patterns, include, url
 from django.conf.urls.defaults import *
+from tastypie.api import Api
+
 
 from website.views.blog.feed import RssFeed, AtomFeed
-
+from website.views.api import InboxesResource
 
 # error views
 handler500 = "website.views.error.internal_server"
 handler404 = "website.views.error.not_found"
 handler403 = "website.views.error.permission_denied"
 
+api_v1 = Api(api_name='v1')
+api_v1.register(InboxesResource())
 
 # If you're debugging regex, test it out on http://www.debuggex.com/ first - M
 urlpatterns = patterns('',
     url(r'^$', 'website.views.index.index'),
-    
+    (r'^api/', include(v1_api.urls)),
     url(r'^blog/add/', 'website.views.blog.add.add'),
     url(r'^blog/post/(?P<postid>\d+)', 'website.views.blog.view.post'),
     url(r'^blog/delete/(?P<postid>\d+)', 'website.views.blog.delete.delete'),

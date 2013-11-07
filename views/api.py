@@ -67,7 +67,6 @@ class InboxesResource(ModelResource):
         return bundle
 
     def obj_create(self, bundle, **kwargs):
-        # See #119
         #TODO: allow choosing of domain
 
         domain = Domain.objects.only('id')[0]
