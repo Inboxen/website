@@ -52,6 +52,7 @@ from datetime import datetime
 from django.conf.urls import url
 from django.utils.translation import ugettext as _
 from pytz import utc
+from tastypie import fields
 from tastypie.authentication import SessionAuthentication
 from tastypie.authorization import DjangoAuthorization
 from tastypie.bundle import Bundle
@@ -138,6 +139,20 @@ class InboxesResource(ModelResource):
     """Handle Inbox related requests"""
     #TODO: make tags updatable as a child of this resource?
 
+    tags = fields.ListField(help_text=_("List of tags on an inbox Ex. [\"example\", \"such masterful\", \"so skill\"]"))
+    unread = fields.IntegerField(readonly=True)
+
+    def build_schema(self):
+        data = super(InboxesResource, self).build_schema()
+        fields = data['fields']
+
+        fields['created']['readonly'] = True
+
+        fields['inbox']['readonly'] = True
+        fields['inbox']['unique'] = True
+
+        return data
+
     def dehydrate(self, bundle):
         """Add and overwrite fields"""
         bundle.data['unread'] = bundle.obj.email_set.filter(read=False).count()
@@ -222,6 +237,7 @@ class InboxesResource(ModelResource):
         list_allowed_methods = ['get', 'post', 'delete']
         detail_allowed_methods = ['get', 'delete']
         excludes = ['deleted', 'id', 'user']
+        limit = 20
 
         authentication = SessionAuthentication()
         authorization = InboxenAuth()
