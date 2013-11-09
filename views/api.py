@@ -145,7 +145,7 @@ class InboxesResource(ModelResource):
         bundle.data['inbox'] = inbox
 
         tags = [tag.tag for tag in bundle.obj.tag_set.only("tag")]
-        bundle.data['tags'] = " ".join(tags)
+        bundle.data['tags'] = tags
 
         return bundle
 
@@ -172,7 +172,7 @@ class InboxesResource(ModelResource):
         new_inbox = Inbox(inbox=inbox, domain=domain, user=bundle.request.user, created=datetime.now(utc))
         new_inbox.save()
 
-        tags = kwargs.get('tags','')
+        tags = bundle.data.get('tags',[])
         for tag in tags:
             tag = Tag(tag=tag)
             tag.inbox = new_inbox
