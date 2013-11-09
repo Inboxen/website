@@ -54,6 +54,7 @@ from django.utils.translation import ugettext as _
 from pytz import utc
 from tastypie.authentication import SessionAuthentication
 from tastypie.authorization import DjangoAuthorization
+from tastypie.bundle import Bundle
 from tastypie.exceptions import Unauthorized
 from tastypie.resources import ModelResource, Resource
 
@@ -148,6 +149,20 @@ class InboxesResource(ModelResource):
 
         return bundle
 
+    def detail_uri_kwargs(self, bundle_or_obj):
+        """Expose 'inbox@domain' as the PK"""
+        kwargs = {}
+
+        if isinstance(bundle_or_obj, Bundle):
+            obj = bundle_or_obj.obj
+        else:
+            obj = bundle_or_obj
+
+        kwargs['inbox'] = obj.inbox
+        kwargs['domain__domain'] = obj.domain.domain
+
+        return kwargs
+
     def obj_create(self, bundle, **kwargs):
         #TODO: allow choosing of domain
 
@@ -192,7 +207,7 @@ class InboxesResource(ModelResource):
 
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>%s)/(?P<inbox>[a-zA-Z0-9\.]+)@(?P<domain>[a-zA-Z0-9\.]+)/$" % self._meta.resource_name, self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
+            url(r"^(?P<resource_name>%s)/(?P<inbox>[a-zA-Z0-9\.]+)@(?P<domain__domain>[a-zA-Z0-9\.]+)/$" % self._meta.resource_name, self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
         ]
 
     def rollback(self, bundles):
@@ -206,7 +221,6 @@ class InboxesResource(ModelResource):
         list_allowed_methods = ['get', 'post', 'delete']
         detail_allowed_methods = ['get', 'delete']
         excludes = ['deleted', 'id', 'user']
-        detail_uri_name = 'inbox'
 
         authentication = SessionAuthentication()
         authorization = InboxenAuth()
