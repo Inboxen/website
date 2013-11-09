@@ -49,6 +49,7 @@ apply to them:
 
 from datetime import datetime
 
+from django.conf.urls import url
 from django.utils.translation import ugettext as _
 from pytz import utc
 from tastypie.authentication import SessionAuthentication
@@ -136,7 +137,7 @@ class InboxesResource(ModelResource):
     #TODO: make tags updatable as a child of this resource?
 
     def dehydrate(self, bundle):
-        # add an unread count to response
+        """Add and overwrite fields"""
         bundle.data['unread'] = bundle.obj.email_set.filter(read=False).count()
 
         inbox = "%s@%s" % (bundle.obj.inbox, bundle.obj.domain.domain)
@@ -189,10 +190,13 @@ class InboxesResource(ModelResource):
             authed_obj.save()
             delete_inbox.delay(authed_obj)
 
+    def prepend_urls(self):
+        return [
+            url(r"^(?P<resource_name>%s)/(?P<inbox>[a-zA-Z0-9\.]+)@(?P<domain>[a-zA-Z0-9\.]+)/$" % self._meta.resource_name, self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
+        ]
+
     def rollback(self, bundles):
-        """"Rollback
-        Disabled
-        """
+        """Disabled"""
         pass
 
     class Meta:
@@ -201,7 +205,8 @@ class InboxesResource(ModelResource):
         always_return_data = True
         list_allowed_methods = ['get', 'post', 'delete']
         detail_allowed_methods = ['get', 'delete']
-        excludes = ['deleted', 'user']
+        excludes = ['deleted', 'id', 'user']
+        detail_uri_name = 'inbox'
 
         authentication = SessionAuthentication()
         authorization = InboxenAuth()
