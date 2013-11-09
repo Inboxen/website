@@ -79,12 +79,13 @@ class InboxenAuth(DjangoAuthorization):
         if not self.base_checks(bundle.request, bundle.obj.__class__):
             raise Unauthorized(_("You're not logged in"))
 
-        if hasattr(bundle.obj.__class__, 'user'):
+        if hasattr(bundle.obj.__class__, 'user') and hasattr(bundle.obj, 'user'):
             return bundle.obj.user == bundle.request.user
-        elif hasattr(object_list.__class__, 'inbox'):
+        elif hasattr(bundle.obj.__class__, 'inbox') and hasattr(bundle.obj, 'inbox'):
             return bundle.obj.inbox.user == bundle.request.user
         else:
-            return False
+            #TODO: There must be a better way to allow schema-reads
+            return True
 
     def create_list(self, object_list, bundle):
         if not self.base_checks(bundle.request, object_list.model):
