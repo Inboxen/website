@@ -138,6 +138,13 @@ class InboxesResource(ModelResource):
     def dehydrate(self, bundle):
         # add an unread count to response
         bundle.data['unread'] = bundle.obj.email_set.filter(read=False).count()
+
+        inbox = "%s@%s" % (bundle.obj.inbox, bundle.obj.domain.domain)
+        bundle.data['inbox'] = inbox
+
+        tags = [tag.tag for tag in bundle.obj.tag_set.only("tag")]
+        bundle.data['tags'] = " ".join(tags)
+
         return bundle
 
     def obj_create(self, bundle, **kwargs):
@@ -181,6 +188,12 @@ class InboxesResource(ModelResource):
             authed_obj.deleted = True
             authed_obj.save()
             delete_inbox.delay(authed_obj)
+
+    def rollback(self, bundles):
+        """"Rollback
+        Disabled
+        """
+        pass
 
     class Meta:
         resource_name = 'inbox'
