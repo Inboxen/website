@@ -1,4 +1,4 @@
-Website
-=======
-This is the web interface for inboxen and all the API end points. 
+Website- obsolete
+=================
 
+Please see [our new repo](https://github.com/Inboxen/Inboxen) for current development
